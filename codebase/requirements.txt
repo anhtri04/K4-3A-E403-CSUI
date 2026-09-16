@@ -1,0 +1,1 @@
+# (urllib stdlib — không cần SDK; cài thêm nếu muốn dùng openai package)

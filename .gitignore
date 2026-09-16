@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+codebase/outputs/
+codebase/.env
+.DS_Store
