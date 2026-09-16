@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Stamina Coach — AI Training Prototype</title>
+<style>
+  :root{
+    --bg:#f4f6f5; --panel:#ffffff; --ink:#18221f; --muted:#708079;
+    --line:#e0e6e3; --brand:#1f7a5a; --brand-2:#dff2e9; --dark:#17352b;
+    --run:#ef7c62; --bike:#4c87e8; --swim:#42a5d8; --strength:#9a74d6;
+    --good:#2e8b66; --warn:#d38b38; --shadow:0 16px 40px rgba(31,52,44,.08);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+  button,input{font:inherit}
+  button{cursor:pointer;border:0}
+  .app{display:flex;min-height:100vh}
+  .sidebar{width:248px;background:#10251e;color:#dcece6;padding:24px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+  .logo{display:flex;align-items:center;gap:10px;padding:4px 10px 28px;font-weight:800;letter-spacing:-.03em;font-size:20px}
+  .logo-mark{width:34px;height:34px;border-radius:11px;background:#78d7b0;color:#10251e;display:grid;place-items:center;font-weight:900}
+  .nav{display:grid;gap:8px}
+  .nav button{background:transparent;color:#9fb5ad;text-align:left;padding:12px 14px;border-radius:12px;font-weight:650;display:flex;align-items:center;gap:11px}
+  .nav button:hover,.nav button.active{background:#214338;color:#fff}
+  .sidebar-bottom{margin-top:auto;background:#1a382f;border:1px solid #2d5145;border-radius:16px;padding:15px}
+  .sidebar-bottom strong{display:block;color:#fff;margin-bottom:6px}
+  .sidebar-bottom p{margin:0;font-size:12px;line-height:1.45;color:#a7c0b7}
+  .main{flex:1;padding:28px 34px 40px;min-width:0}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+  .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:800}
+  h1{margin:5px 0 0;font-size:30px;letter-spacing:-.04em}
+  h2{margin:0;font-size:19px;letter-spacing:-.02em}
+  h3{margin:0;font-size:15px}
+  .profile{display:flex;align-items:center;gap:12px}
+  .avatar{width:42px;height:42px;border-radius:50%;background:#c8e8da;color:#245b48;display:grid;place-items:center;font-weight:800}
+  .content{max-width:1240px;margin:0 auto}
+  .screen{display:none}
+  .screen.active{display:block}
+  .grid{display:grid;gap:16px}
+  .hero{display:grid;grid-template-columns:1.35fr .65fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .hero-card{padding:26px}
+  .goal-row{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
+  .goal-title{font-size:28px;font-weight:800;letter-spacing:-.04em;margin:4px 0 6px}
+  .goal-sub{color:var(--muted);margin:0;line-height:1.5}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:750;background:#eef4f1;color:#426357}
+  .progress{margin:26px 0 12px;height:12px;border-radius:999px;background:#edf1ef;overflow:hidden}
+  .progress > span{display:block;height:100%;width:64%;background:linear-gradient(90deg,#65c99c,#1f7a5a);border-radius:inherit}
+  .meta-row{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+  .coach-note{padding:22px}
+  .coach-note .bot{display:flex;gap:12px}
+  .bot-icon{width:42px;height:42px;border-radius:13px;background:#dff2e9;display:grid;place-items:center;font-size:20px}
+  .coach-note p{margin:12px 0 0;line-height:1.55;color:#44534d}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr)}
+  .stat{padding:18px;border-right:1px solid var(--line)}
+  .stat:last-child{border-right:0}
+  .stat-top{display:flex;justify-content:space-between;align-items:center}
+  .stat-num{font-size:26px;font-weight:800;letter-spacing:-.04em;margin-top:10px}
+  .stat-label{font-size:12px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+  .section-card{padding:22px}
+  .section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .linkbtn{background:transparent;color:var(--brand);font-weight:700;padding:0}
+  .session{display:flex;gap:14px;padding:16px 0;border-top:1px solid var(--line)}
+  .session:first-child{border-top:0;padding-top:0}
+  .sport-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:20px;color:#fff;flex:none}
+  .session-main{flex:1}
+  .session-title{font-weight:800;margin-bottom:4px}
+  .session-meta{font-size:13px;color:var(--muted)}
+  .session-right{text-align:right}
+  .status{font-size:12px;font-weight:800;padding:6px 8px;border-radius:999px;display:inline-block}
+  .status.good{color:#236449;background:#e6f5ee}
+  .status.pending{color:#8d6729;background:#fbf0da}
+  .mini-bars{height:92px;display:flex;align-items:flex-end;gap:10px;padding-top:15px}
+  .mini-bars span{flex:1;background:#bfe3d2;border-radius:8px 8px 3px 3px;min-height:10px}
+  .mini-labels{display:flex;gap:10px;color:var(--muted);font-size:11px}
+  .mini-labels span{flex:1;text-align:center}
+  .btn{padding:11px 15px;border-radius:12px;font-weight:800;transition:.15s}
+  .btn.primary{background:#1f7a5a;color:#fff}
+  .btn.primary:hover{background:#155f45}
+  .btn.secondary{background:#edf4f0;color:#275a49}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:#355249}
+  .btn.danger{background:#fff0ec;color:#a9513d}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap}
+  .chat-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;height:calc(100vh - 110px);min-height:680px}
+  .chat-side{padding:18px;display:flex;flex-direction:column}
+  .chat-side .new-chat{margin:14px 0 18px;width:100%}
+  .chat-side h3{margin-top:8px}
+  .conversation{border-top:1px solid var(--line);padding:13px 2px;display:flex;gap:10px;align-items:flex-start}
+  .conversation strong{font-size:13px}
+  .conversation small{display:block;color:var(--muted);margin-top:3px;line-height:1.35}
+  .chat-panel{display:flex;flex-direction:column;overflow:hidden}
+  .chat-header{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+  .chat-title{display:flex;align-items:center;gap:10px}
+  .online{width:9px;height:9px;border-radius:50%;background:#3db57f}
+  .messages{flex:1;overflow:auto;padding:26px 26px 10px;background:linear-gradient(#fbfcfb,#f7f9f8)}
+  .message{display:flex;gap:10px;max-width:76%;margin-bottom:18px}
+  .message.user{margin-left:auto;flex-direction:row-reverse}
+  .bubble{padding:13px 15px;border-radius:16px 16px 16px 4px;line-height:1.5;font-size:14px}
+  .message.user .bubble{background:#1f7a5a;color:#fff;border-radius:16px 16px 4px 16px}
+  .message.ai .bubble{background:#fff;border:1px solid var(--line)}
+  .message .mini-avatar{width:32px;height:32px;border-radius:10px;background:#dff2e9;display:grid;place-items:center;flex:none}
+  .message.user .mini-avatar{background:#cde4da;color:#245b48}
+  .quick-actions{padding:10px 20px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line)}
+  .chip{padding:8px 11px;border-radius:999px;background:#eef4f1;color:#3d5b50;font-size:12px;font-weight:700}
+  .composer{display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--line);background:#fff}
+  .composer input{flex:1;border:1px solid var(--line);border-radius:13px;padding:12px 14px;outline:none}
+  .composer input:focus{border-color:#8bc5ae;box-shadow:0 0 0 3px #e8f6ef}
+  .plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .plan-day{padding:17px;border:1px solid var(--line);border-radius:14px;background:#fbfcfb}
+  .plan-day-head{display:flex;justify-content:space-between;margin-bottom:12px}
+  .plan-item{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--line)}
+  .plan-item:first-child{border-top:0}
+  .plan-item-main{flex:1}
+  .plan-item strong{font-size:13px}
+  .plan-item small{display:block;color:var(--muted);margin-top:2px}
+  .analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .analysis-score{display:flex;align-items:center;gap:18px}
+  .score-ring{width:88px;height:88px;border-radius:50%;background:conic-gradient(#2f956d 0 78%,#eaf0ed 78%);display:grid;place-items:center;position:relative}
+  .score-ring::after{content:"";position:absolute;inset:8px;border-radius:50%;background:#fff}
+  .score-ring span{position:relative;z-index:1;font-weight:850;font-size:20px}
+  .insight{padding:13px;border-radius:13px;background:#f4f8f6;margin-top:12px;line-height:1.45;color:#3c4b45;font-size:13px}
+  .meter{height:8px;border-radius:999px;background:#edf1ef;overflow:hidden;margin-top:8px}
+  .meter span{display:block;height:100%;border-radius:inherit;background:#65ba96}
+  .history-table{width:100%;border-collapse:collapse}
+  .history-table th,.history-table td{padding:12px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
+  .history-table th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  .empty{padding:32px;text-align:center;color:var(--muted)}
+  .toast{position:fixed;right:25px;bottom:25px;background:#17352b;color:#fff;padding:13px 16px;border-radius:12px;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s;z-index:20}
+  .toast.show{opacity:1;transform:none}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(8,20,16,.42);display:none;align-items:center;justify-content:center;padding:22px;z-index:30}
+  .modal-backdrop.open{display:flex}
+  .modal{background:#fff;border-radius:20px;max-width:820px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 30px 90px rgba(0,0,0,.18)}
+  .modal-header{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:16px}
+  .modal-body{padding:22px}
+  .close{background:#eef4f1;border-radius:10px;width:34px;height:34px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:7px}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);padding:11px 12px;border-radius:12px;outline:none;background:#fff}
+  .field textarea{min-height:100px;resize:vertical}
+  .field.full{grid-column:1/-1}
+  .modal-footer{padding:16px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px}
+  @media (max-width:1000px){
+    .sidebar{width:76px;padding:20px 10px}.logo span,.nav button span,.sidebar-bottom{display:none}.logo{justify-content:center}
+    .nav button{justify-content:center;padding:12px}.main{padding:22px}.hero,.two-col,.analysis-grid,.plan-grid{grid-template-columns:1fr}
+  }
+  @media (max-width:760px){
+    .stats{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2){border-right:0}.stat:nth-child(-n+2){border-bottom:1px solid var(--line)}
+    .chat-layout{grid-template-columns:1fr;height:auto;min-height:0}.chat-side{display:none}.messages{min-height:520px}
+    .topbar{align-items:flex-start}.topbar .profile > div:first-child{display:none}.main{padding:16px}
+    .form-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><div class="logo-mark">S</div><span>Stamina Coach</span></div>
+    <nav class="nav">
+      <button class="nav-btn active" data-screen="dashboard"><span>⌂</span><span>Dashboard</span></button>
+      <button class="nav-btn" data-screen="coach"><span>✦</span><span>AI Coach</span></button>
+      <button class="nav-btn" data-screen="training"><span>◫</span><span>Training Plan</span></button>
+      <button class="nav-btn" data-screen="progress"><span>↗</span><span>Progress</span></button>
+      <button class="nav-btn" data-screen="history"><span>◷</span><span>History</span></button>
+    </nav>
+    <div class="sidebar-bottom">
+      <strong>AI Coach is learning</strong>
+      <p>Your training history is used to make future recommendations more personal.</p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="content">
+      <div class="topbar">
+        <div>
+          <div class="eyebrow">Stamina training workspace</div>
+          <h1 id="page-title">Dashboard</h1>
+        </div>
+        <div class="profile">
+          <div>
+            <strong>Nguyễn Anh Trí</strong><br/>
+            <span style="font-size:12px;color:var(--muted)">Athlete profile</span>
+          </div>
+          <div class="avatar">AT</div>
+        </div>
+      </div>
+
+      <!-- Dashboard -->
+      <section class="screen active" id="screen-dashboard">
+        <div class="grid">
+          <div class="hero">
+            <div class="card hero-card">
+              <div class="goal-row">
+                <div>
+                  <div class="pill">Goal · Triathlon</div>
+                  <div class="goal-title">Finish a Half Ironman</div>
+                  <p class="goal-sub">Build enough aerobic endurance to complete 1.9 km swim · 90 km bike · 21.1 km run.</p>
+                </div>
+                <button class="btn secondary" onclick="openPlanModal()">Adjust goal</button>
+              </div>
+              <div class="progress"><span id="goal-progress"></span></div>
+              <div class="meta-row"><span>Training block: Base → Build</span><strong id="progress-label">64%</strong></div>
+            </div>
+            <div class="card coach-note">
+              <div class="bot">
+                <div class="bot-icon">✦</div>
+                <div><strong>AI Coach</strong><div style="font-size:12px;color:var(--muted)">Today's coaching note</div></div>
+              </div>
+              <p id="coach-note-text">Your last three endurance sessions are consistent. Keep today's easy bike genuinely easy so the next quality run gets better adaptation.</p>
+              <button class="linkbtn" style="margin-top:10px" onclick="go('coach')">Talk to your coach →</button>
+            </div>
+          </div>
+
+          <div class="card stats">
+            <div class="stat"><div class="stat-top"><span class="stat-label">RUN · 7D</span><span class="dot" style="background:var(--run)"></span></div><div class="stat-num">42.4 km</div><div class="stat-label">+8% vs last week</div></div>
+            <div class="stat"><div class="stat-top"><span class="stat-label">BIKE · 7D</span><span class="dot" style="background:var(--bike)"></span></div><div class="stat-num">86 km</div><div class="stat-label">+14% vs last week</div></div>
+            <div class="stat"><div class="stat-top"><span class="stat-label">SWIM · 7D</span><span class="dot" style="background:var(--swim)"></span></div><div class="stat-num">4.2 km</div><div class="stat-label">+5% vs last week</div></div>
+            <div class="stat"><div class="stat-top"><span class="stat-label">STRENGTH</span><span class="dot" style="background:var(--strength)"></span></div><div class="stat-num">2 sess.</div><div class="stat-label">Consistency 83%</div></div>
+          </div>
+
+          <div class="two-col">
+            <div class="card section-card">
+              <div class="section-head"><h2>Today's training</h2><button class="linkbtn" onclick="go('training')">View plan</button></div>
+              <div class="session">
+                <div class="sport-icon" style="background:var(--bike)">🚴</div>
+                <div class="session-main"><div class="session-title">Easy Bike · Aerobic Base</div><div class="session-meta">60 min · Z2 · Cadence 85–95 rpm</div></div>
+                <div class="session-right"><span class="status good">Completed</span><div class="session-meta" style="margin-top:5px">22.3 km</div></div>
+              </div>
+              <div class="session">
+                <div class="sport-icon" style="background:var(--strength)">🏋</div>
+                <div class="session-main"><div class="session-title">Strength · Full Body</div><div class="session-meta">35 min · RPE 6 · Mobility included</div></div>
+                <div class="session-right"><span class="status pending">Upcoming</span><div class="session-meta" style="margin-top:5px">Tomorrow</div></div>
+              </div>
+            </div>
+
+            <div class="card section-card">
+              <div class="section-head"><h2>Progression</h2><button class="linkbtn" onclick="go('progress')">Explore</button></div>
+              <div style="font-size:13px;color:var(--muted)">Weekly training load</div>
+              <div class="mini-bars" id="mini-bars">
+                <span style="height:35%"></span><span style="height:49%"></span><span style="height:42%"></span><span style="height:63%"></span><span style="height:58%"></span><span style="height:78%"></span><span style="height:70%"></span><span style="height:88%"></span>
+              </div>
+              <div class="mini-labels"><span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span><span>W6</span><span>W7</span><span>W8</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Coach -->
+      <section class="screen" id="screen-coach">
+        <div class="chat-layout">
+          <div class="card chat-side">
+            <div class="eyebrow">Coach workspace</div>
+            <button class="btn primary new-chat" onclick="resetChat()">＋ New conversation</button>
+            <h3>Recent</h3>
+            <div class="conversation"><div class="bot-icon">🚴</div><div><strong>Analyze my bike</strong><small>Synced 23.4 km · 1h 02m</small></div></div>
+            <div class="conversation"><div class="bot-icon">🏃</div><div><strong>Manual run report</strong><small>“I felt heavy after 6 km”</small></div></div>
+            <div class="conversation"><div class="bot-icon">🎯</div><div><strong>Half Ironman goal</strong><small>Plan generated 8 weeks ago</small></div></div>
+          </div>
+          <div class="card chat-panel">
+            <div class="chat-header">
+              <div class="chat-title"><div class="bot-icon">✦</div><div><strong>AI Coach</strong><div style="font-size:12px;color:var(--muted)"><span class="online" style="display:inline-block;margin-right:5px"></span>Ready to coach</div></div></div>
+              <button class="btn secondary" onclick="openPlanModal()">Create / edit goal</button>
+            </div>
+            <div class="messages" id="messages"></div>
+            <div class="quick-actions">
+              <button class="chip" onclick="quick('I want to create a new training goal')">Create a goal</button>
+              <button class="chip" onclick="quick('Analyze my latest synced session')">Analyze synced session</button>
+              <button class="chip" onclick="quick('I trained without my watch today')">Manual workout</button>
+              <button class="chip" onclick="quick('How is my progress?')">Progress check</button>
+            </div>
+            <div class="composer">
+              <input id="chat-input" placeholder="Tell your coach what you trained, or what you want to achieve…" onkeydown="if(event.key==='Enter') sendChat()" />
+              <button class="btn primary" onclick="sendChat()">Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Training -->
+      <section class="screen" id="screen-training">
+        <div class="grid">
+          <div class="card section-card">
+            <div class="section-head">
+              <div><div class="eyebrow">8-week build</div><h2 style="margin-top:4px">Half Ironman Training Plan</h2></div>
+              <div class="toolbar"><button class="btn secondary" onclick="openPlanModal()">Edit goal</button><button class="btn primary" onclick="simulateAdaptation()">Apply AI adjustment</button></div>
+            </div>
+            <p style="color:var(--muted);margin-top:0">The plan evolves from completed sessions, manual reports, recovery signals and your stated target.</p>
+          </div>
+          <div class="plan-grid">
+            <div class="card section-card">
+              <div class="plan-day-head"><strong>Mon · Recovery</strong><span class="pill">Easy</span></div>
+              <div class="plan-item"><div class="sport-icon" style="background:var(--swim)">🏊</div><div class="plan-item-main"><strong>Technique Swim</strong><small>1.6 km · drills + relaxed aerobic</small></div></div>
+              <div class="plan-item"><div class="sport-icon" style="background:var(--strength)">🏋</div><div class="plan-item-main"><strong>Mobility</strong><small>20 min · hips + calves + thoracic</small></div></div>
+            </div>
+            <div class="card section-card">
+              <div class="plan-day-head"><strong>Tue · Quality</strong><span class="pill">Moderate</span></div>
+              <div class="plan-item"><div class="sport-icon" style="background:var(--run)">🏃</div><div class="plan-item-main"><strong>Threshold Run</strong><small>8 km · 3 × 8 min comfortably hard</small></div></div>
+            </div>
+            <div class="card section-card">
+              <div class="plan-day-head"><strong>Wed · Aerobic</strong><span class="pill">Easy</span></div>
+              <div class="plan-item"><div class="sport-icon" style="background:var(--bike)">🚴</div><div class="plan-item-main"><strong>Endurance Bike</strong><small>75 min · Z2 · steady cadence</small></div></div>
+            </div>
+            <div class="card section-card">
+              <div class="plan-day-head"><strong>Thu · Strength</strong><span class="pill">RPE 6</span></div>
+              <div class="plan-item"><div class="sport-icon" style="background:var(--strength)">🏋</div><div class="plan-item-main"><strong>Full Body Strength</strong><small>35 min · posterior chain + core</small></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Progress -->
+      <section class="screen" id="screen-progress">
+        <div class="grid">
+          <div class="card section-card">
+            <div class="section-head"><div><div class="eyebrow">Longitudinal view</div><h2 style="margin-top:4px">Training Progression</h2></div><span class="pill">8 weeks tracked</span></div>
+            <div class="two-col" style="grid-template-columns:1fr 1fr">
+              <div>
+                <div style="font-size:13px;color:var(--muted)">Aerobic consistency</div>
+                <div style="font-size:34px;font-weight:850;margin:5px 0">83%</div>
+                <div class="meter"><span style="width:83%"></span></div>
+                <div style="font-size:12px;color:var(--muted);margin-top:8px">Completed as planned in the current block.</div>
+              </div>
+              <div>
+                <div style="font-size:13px;color:var(--muted)">Long-session tolerance</div>
+                <div style="font-size:34px;font-weight:850;margin:5px 0">71%</div>
+                <div class="meter"><span style="width:71%"></span></div>
+                <div style="font-size:12px;color:var(--muted);margin-top:8px">Improving based on duration and subjective effort.</div>
+              </div>
+            </div>
+          </div>
+          <div class="card section-card">
+            <div class="section-head"><h2>Progression by sport</h2></div>
+            <div class="session">
+              <div class="sport-icon" style="background:var(--run)">🏃</div><div class="session-main"><div class="session-title">Run</div><div class="session-meta">Easy pace trend · 6:05 → 5:48 /km</div></div><strong>+8%</strong>
+            </div>
+            <div class="session">
+              <div class="sport-icon" style="background:var(--bike)">🚴</div><div class="session-main"><div class="session-title">Bike</div><div class="session-meta">Z2 duration · 48 → 66 min</div></div><strong>+21%</strong>
+            </div>
+            <div class="session">
+              <div class="sport-icon" style="background:var(--swim)">🏊</div><div class="session-main"><div class="session-title">Swim</div><div class="session-meta">Continuous distance · 1.1 → 1.6 km</div></div><strong>+15%</strong>
+            </div>
+            <div class="session">
+              <div class="sport-icon" style="background:var(--strength)">🏋</div><div class="session-main"><div class="session-title">Strength</div><div class="session-meta">Weekly consistency · 1 → 2 sessions</div></div><strong>+18%</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- History -->
+      <section class="screen" id="screen-history">
+        <div class="card section-card">
+          <div class="section-head"><div><div class="eyebrow">Session history</div><h2 style="margin-top:4px">Training Records</h2></div><button class="btn primary" onclick="go('coach'); quick('I trained without my watch today')">＋ Log manually</button></div>
+          <table class="history-table">
+            <thead><tr><th>Date</th><th>Sport</th><th>Session</th><th>Source</th><th>Load</th><th>Coach note</th></tr></thead>
+            <tbody id="history-body">
+              <tr><td>Today</td><td>🚴 Bike</td><td>Easy aerobic · 22.3 km</td><td><span class="status good">Smartwatch</span></td><td>42</td><td>On target</td></tr>
+              <tr><td>Yesterday</td><td>🏃 Run</td><td>Easy · 7.2 km</td><td><span class="status good">Smartwatch</span></td><td>38</td><td>Great pacing</td></tr>
+              <tr><td>Mon</td><td>🏊 Swim</td><td>Technique · 1.6 km</td><td><span class="status good">Smartwatch</span></td><td>31</td><td>Technique improving</td></tr>
+              <tr><td>Sun</td><td>🏋 Strength</td><td>Full body · 35 min</td><td><span class="status">Manual</span></td><td>28</td><td>Good recovery choice</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="goal-modal">
+  <div class="modal">
+    <div class="modal-header"><div><div class="eyebrow">AI goal setup</div><h2 style="margin-top:4px">Create or adjust your training target</h2></div><button class="close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Primary goal</label><input id="goal-name" value="Finish a Half Ironman" /></div>
+        <div class="field"><label>Target date</label><input id="goal-date" type="date" value="2027-03-14" /></div>
+        <div class="field"><label>Primary sport</label><select id="goal-sport"><option>Triathlon</option><option>Run</option><option>Bike</option><option>Swim</option><option>Strength</option></select></div>
+        <div class="field"><label>Weekly availability</label><select><option>5–7 hours</option><option>7–9 hours</option><option>9–12 hours</option></select></div>
+        <div class="field full"><label>What matters most to you?</label><textarea id="goal-context">Build endurance steadily, finish the event confidently, and avoid overtraining.</textarea></div>
+      </div>
+      <div class="insight">The real product would use this information to decide what follow-up questions are necessary before generating a personalized plan.</div>
+    </div>
+    <div class="modal-footer"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="generatePlan()">Generate AI plan</button></div>
+  </div>
+</div>
+
+<script>
+const state = {
+  screen: 'dashboard',
+  chatStage: 'idle',
+  manualFlow: false,
+  historyAdded: false
+};
+
+const screens = {
+  dashboard: 'Dashboard', coach: 'AI Coach', training: 'Training Plan', progress: 'Progress', history: 'History'
+};
+
+function go(name){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(x=>x.classList.toggle('active', x.dataset.screen===name));
+  document.getElementById('page-title').textContent = screens[name];
+  state.screen=name;
+  if(name==='coach' && !document.querySelector('#messages .message')) initChat();
+}
+
+function toast(msg){
+  const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(window.__toast); window.__toast=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+function openPlanModal(){document.getElementById('goal-modal').classList.add('open')}
+function closeModal(){document.getElementById('goal-modal').classList.remove('open')}
+
+function addMessage(role, text){
+  const wrap=document.getElementById('messages');
+  const row=document.createElement('div'); row.className='message '+role;
+  const av=document.createElement('div'); av.className='mini-avatar'; av.textContent=role==='ai'?'✦':'AT';
+  const bubble=document.createElement('div'); bubble.className='bubble'; bubble.innerHTML=text;
+  row.appendChild(av); row.appendChild(bubble); wrap.appendChild(row); wrap.scrollTop=wrap.scrollHeight;
+}
+
+function initChat(){
+  const wrap=document.getElementById('messages');
+  wrap.innerHTML='';
+  addMessage('ai',`Hi! I'm your <strong>Stamina Coach</strong>. I can help you set a target, build a plan, analyze synced training, or log a session without a device.<br><br>What would you like to work on?`);
+}
+
+function resetChat(){initChat();state.manualFlow=false;state.chatStage='idle';toast('New coaching conversation started')}
+
+function quick(text){document.getElementById('chat-input').value=text;sendChat()}
+
+function sendChat(){
+  const input=document.getElementById('chat-input'); const text=input.value.trim(); if(!text)return;
+  addMessage('user',text); input.value='';
+  const lower=text.toLowerCase();
+
+  setTimeout(()=>{
+    if(state.chatStage==='manual-ask-effort'){
+      addMessage('ai',`Got it. How hard did the session feel on a <strong>1–10 effort scale</strong>, and did you notice any unusual fatigue or pain?`);
+      state.chatStage='manual-ask-rpe'; return;
+    }
+    if(state.chatStage==='manual-ask-rpe'){
+      addMessage('ai',`Thanks. I have enough to create a training record.<br><br><strong>Manual session captured</strong><br>• 8 km run<br>• 48 min<br>• RPE 7/10<br>• Moderate fatigue, no pain<br><br>I compared it with today's planned easy run. You went a little harder than planned, so I recommend keeping tomorrow's bike in low Zone 2.`);
+      state.chatStage='manual-done';
+      addManualHistory();
+      return;
+    }
+    if(lower.includes('goal') || lower.includes('target') || lower.includes('half ironman')){
+      addMessage('ai',`Great. Before I generate a plan, I need a few things I don't yet know: <strong>target date, current weekly training volume, your usual longest session, and how many days per week you can train</strong>.<br><br>You can use the <strong>Create / edit goal</strong> button above to enter them.`);
+      return;
+    }
+    if(lower.includes('synced') || lower.includes('watch') || lower.includes('device') || lower.includes('latest bike')){
+      addMessage('ai',`I can simulate a smartwatch sync now. I'll compare the imported session with today's plan and then update your training history.`);
+      setTimeout(simulateSync,600);
+      return;
+    }
+    if(lower.includes('manual') || lower.includes('without') || lower.includes('trained without')){
+      state.manualFlow=true;
+      addMessage('ai',`No problem — let's log it manually. Tell me the <strong>sport, duration, distance (or sets/reps for strength), and what the session felt like</strong>.`);
+      state.chatStage='manual-await'; return;
+    }
+    if(state.chatStage==='manual-await'){
+      addMessage('ai',`Thanks. I have the basics. One more thing: how hard did it feel on a <strong>1–10 scale</strong>, and was there any unusual fatigue or pain?`);
+      state.chatStage='manual-ask-rpe'; return;
+    }
+    if(lower.includes('progress')){
+      addMessage('ai',`Your current progression signal is <strong>83% aerobic consistency</strong>. Your bike volume and long-session tolerance are rising, while your recent easy runs are becoming faster at similar effort.<br><br>The main coaching signal is to keep easy days easy so total load increases don't outrun recovery.`);
+      return;
+    }
+    addMessage('ai',`I can help with that. Try one of these: <strong>create a goal</strong>, <strong>analyze my latest synced session</strong>, <strong>log a manual workout</strong>, or <strong>check my progress</strong>.`);
+  },500);
+}
+
+function simulateSync(){
+  toast('Smartwatch data synced');
+  addMessage('ai',`<strong>Session synced ✓</strong><br>Bike · 22.3 km · 1:02:14<br>Avg HR 148 bpm · Avg cadence 88 rpm · Elevation +214 m`);
+  setTimeout(()=>{
+    addMessage('ai',`<strong>AI analysis</strong><br><br>Your target was 60 min of low Zone 2. You completed 62 min, but average HR drifted slightly above the intended range late in the session.<br><br><div class="insight">Coach signal: aerobic workload is productive, but tomorrow should remain easy. No need to add volume this week.</div>`);
+    setTimeout(()=>{
+      addMessage('ai',`<strong>Plan recommendation</strong><br>Keep the next quality run unchanged, reduce Thursday strength by ~10 minutes, and preserve Saturday's long bike. I've updated the demo plan recommendation — review it in <strong>Training Plan</strong>.`);
+      simulateAdaptation(true);
+      addSyncedHistory();
+    },550);
+  },550);
+}
+
+function simulateAdaptation(fromSync=false){
+  document.getElementById('coach-note-text').textContent='After the latest training data, your coach is protecting recovery while preserving the key endurance sessions. Strength volume is trimmed slightly this week.';
+  if(fromSync) toast('Plan recommendation updated from synced data');
+  else toast('AI adjustment applied to the training plan');
+}
+
+function addSyncedHistory(){
+  if(state.historyAdded)return;
+  const tbody=document.getElementById('history-body');
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td>Today</td><td>🚴 Bike</td><td>Endurance · 22.3 km</td><td><span class="status good">Smartwatch</span></td><td>42</td><td>Keep next day easy</td>';
+  tbody.prepend(tr); state.historyAdded=true;
+}
+
+function addManualHistory(){
+  const tbody=document.getElementById('history-body');
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td>Today</td><td>🏃 Run</td><td>Manual · 8 km · 48 min</td><td><span class="status">Manual</span></td><td>51</td><td>Harder than planned</td>';
+  tbody.prepend(tr); toast('Manual training added to history');
+}
+
+function generatePlan(){
+  const name=document.getElementById('goal-name').value || 'New training goal';
+  document.querySelector('.goal-title').textContent=name;
+  closeModal();
+  go('training');
+  toast('AI training plan generated');
+}
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>go(b.dataset.screen)));
+document.getElementById('goal-modal').addEventListener('click',e=>{if(e.target.id==='goal-modal')closeModal()});
+initChat();
+</script>
+</body>
+</html>
