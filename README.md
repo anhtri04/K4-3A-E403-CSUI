@@ -4,11 +4,23 @@
 
 **Phòng:** E403 | **Nhóm:** CSUI | **Đề tài:** Stamina Coach — Prototype AI huấn luyện sức bền (chạy bộ / thể lực)
 
+## Canvas sản phẩm — Checkpoint 1
+
+**Stamina Coach — Trò chuyện. Hiểu bạn. Đề xuất lịch tập phù hợp.**
+
+![Canvas Stamina Coach — Mini Hackathon AI, Checkpoint 1](assets/stamina-coach-canvas.png)
+
+Ý tưởng AI coach cá nhân giúp người dùng xây dựng thói quen tập luyện bền vững thông qua hội thoại và dữ liệu sức khỏe được người dùng cho phép sử dụng. Người dùng kể về buổi tập gần đây, mức độ mệt và thời gian rảnh để nhận gợi ý lịch tập ngắn hạn phù hợp.
+
+Xem [mô tả Canvas đầy đủ](canvas.md): người dùng & nỗi đau, kế hoạch kiểm chứng nhu cầu, lát cắt hội thoại → lịch tập 3 ngày, automation dự kiến và phân công. Canvas diễn giải ảnh tham khảo; các hoạt động kiểm chứng và tính năng dự kiến chưa được coi là đã hoàn thành. Phần cuối tài liệu đối chiếu định hướng này với phạm vi prototype trong [AI Spec](spec.md).
+
 ## 1. Cấu trúc repository
 
 ```
 K4-3A-E403-CSUI/
 ├── README.md          # File này: bản sao README đề bài + bảng phân công vai trò
+├── canvas.md          # Mô tả Canvas Stamina Coach — Checkpoint 1 từ ảnh tham khảo
+├── assets/            # Ảnh Canvas gốc và tài nguyên tài liệu
 ├── TEAMMATES.md       # Họ tên, mã số học viên, vai trò từng thành viên
 ├── spec.md            # AI Spec 8 phần đã khóa quality bar
 ├── demo-slides.pdf    # Slide báo cáo đúng 6 trang, định dạng PDF
