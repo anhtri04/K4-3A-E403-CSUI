@@ -1,11 +1,17 @@
 """CLI mirror of Discord commands — used for CP2 flow + CP3 30s video (no token needed)."""
 import argparse, os, json, datetime
+from pathlib import Path
+
+_HERE = Path(__file__).resolve().parent
+from dotenv import load_dotenv
+load_dotenv(_HERE / ".env")  # anchored: works from repo root or codebase/
+
 from ai_client import chat
 from course_kb import lookup
 from opencode_bridge import grep_repo, check_tech, propose_diff, is_attack, SYSTEM
 import approvals
 
-OUT = "./outputs"
+OUT = str(_HERE / "outputs")
 
 
 def log(cmd: str, text: str, mocked: bool):
@@ -68,11 +74,11 @@ if __name__ == "__main__":
     ap.add_argument("--backend", default=os.getenv("BACKEND", "local"),
                     help="local (default) or opencode (`opencode serve` at OPENCODE_SERVER_URL)")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    e = sub.add_parser("explain"); e.add_argument("--symbol", required=True); e.add_argument("--repo", default="./sample_repo")
+    e = sub.add_parser("explain"); e.add_argument("--symbol", required=True); e.add_argument("--repo", default=str(_HERE / "sample_repo"))
     c = sub.add_parser("check-tech"); c.add_argument("--proposal", required=True)
     a = sub.add_parser("ask-course"); a.add_argument("--question", required=True)
-    p = sub.add_parser("propose-diff"); p.add_argument("--task", required=True); p.add_argument("--repo", default="./sample_repo")
-    ap2 = sub.add_parser("approve"); ap2.add_argument("--id", required=True); ap2.add_argument("--user", default="cli-demo"); ap2.add_argument("--repo", default="./sample_repo")
+    p = sub.add_parser("propose-diff"); p.add_argument("--task", required=True); p.add_argument("--repo", default=str(_HERE / "sample_repo"))
+    ap2 = sub.add_parser("approve"); ap2.add_argument("--id", required=True); ap2.add_argument("--user", default="cli-demo"); ap2.add_argument("--repo", default=str(_HERE / "sample_repo"))
     di = sub.add_parser("discard"); di.add_argument("--id", required=True); di.add_argument("--user", default="cli-demo")
     args = ap.parse_args()
     os.environ["BACKEND"] = args.backend
