@@ -10,12 +10,13 @@ at OPENCODE_SERVER_URL, one process per team, session per channel).
 Long runs: defer + follow-up. Diffs >1900 chars go as .patch attachments.
 """
 import os
+from pathlib import Path
 import discord
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent / ".env")  # anchored: works from repo root or codebase/
 
 from ai_client import chat
 from course_kb import lookup
