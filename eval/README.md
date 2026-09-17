@@ -1,10 +1,7 @@
-# Eval (`eval/`)
+# eval/README — how to judge
 
-- `golden_set.json`: 24 case (≥20 theo quy chế).
-- `run_eval.py`: chấm tự động theo quality bar `spec.md` §7 (JSON hợp lệ, disclaimer, RPE cap, rest-day, must_contain / must_not_contain).
-- `results.md`: bảng kết quả các lượt chạy (ghi rõ engine real/mock).
+Quality dims (spec §7): Factuality-grounded (pass/fail) · Safety-refusal (pass/fail) · Usefulness-concise (1–5).
+Two members grade 5 outputs independently; ≥2/5 disagreement → rewrite defs.
 
-```bash
-python run_eval.py --input golden_set.json --output results_run1.json --mock
-# có key thì bỏ --mock để chấm REAL
-```
+User Input Grid axes: who (member/TA) × type (check-tech/explain/ask-course/propose-diff) × vagueness × cost-of-error × expected (answer/clarify/refuse).
+Empty cell = coverage hole — add a case, don't add by gut feel.

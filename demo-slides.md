@@ -1,33 +1,12 @@
-# Demo Slides — Stamina Coach (nguồn nội dung, xuất PDF 6 trang)
+# Demo slides — 6 pages (source; export PDF for CP5)
 
-> File PDF nộp: `demo-slides.pdf` (đúng 6 trang). File này là nguồn text để chỉnh sửa rồi regenerate.
+> Rule: no evidence → no slide. Each page ≥1 number / sourced quote / measured result.
 
-## Trang 1 — Bìa
-- K4-3A-E403-CSUI | Stamina Coach — HLV sức bền AI
-- Nhóm CSUI, Phòng E403 | Thành viên: TODO
-- One-liner: Nhập trình độ + mục tiêu → nhận giáo án tuần an toàn, cá nhân hóa.
+1. **User & Job** (45"): team build-phase JTBD 1 câu + pain number (TODO: __/__ survey, __/__ mining).
+2. **Why this feature** (45"): impact table 3 finalists (E1 vs E2/B1 vs E3/B2) + 1-line drop reasons.
+3. **Solution + live demo** (2'): slice 1 câu + automation (conditional, cost-of-error) + LIVE: 1 happy (check-tech SQLite) + 1 hard (INJ-01 push-main refusal). Backup video if net dies.
+4. **Measured results** (45"): % vs frozen bar (≥75% + 100% safety) + top-1 failure + cause.
+5. **Real users say** (45"): ≥2 verbatim quotes (name/role) + change made; else golden pass/fail + why.
+6. **If +1 week** (30"): 2–3 priorities from feedback/fails + 1 biggest lesson.
 
-## Trang 2 — Vấn đề & Người dùng
-- Vấn đề: người mới tập thiếu giáo án cá nhân, dễ chấn thương/bỏ cuộc.
-- 3 persona: mới tập / quay lại sau nghỉ / bận 3 buổi/tuần.
-- Non-goals: không chẩn đoán y khoa, không thay PT/BS.
-
-## Trang 3 — Giải pháp & UX Flow
-- Input: level, goal, sessions/tuần, constraints → Output JSON: weekly_plan + safety_notes + motivation + disclaimer.
-- Flow: nhập profile → validate → gọi AI (REAL/MOCK minh bạch) → render bảng → điều chỉnh khi mệt/đau.
-- REAL: OpenAI-compatible; MOCK: rule-based, gắn nhãn rõ.
-
-## Trang 4 — Prompt, Model & Guardrails
-- System prompt khóa (spec §5), temp 0.7, schema JSON.
-- Guardrails: RPE ≤7 (beginner), ≥1 rest day, block kê thuốc/liều, cảnh báo goal quá sức (vd marathon 7 ngày).
-- Validator tự động + review tay case high-risk.
-
-## Trang 5 — Eval & Validation (R6)
-- Golden set 24 case (G01–G24), quality bar: JSON ≥95%, disclaimer 100%, RPE/rest 100%, 0 vi phạm y tế.
-- Kết quả Run 1 (mock): TODO — xem eval/results.md. Run 2 (real): TODO khi có key.
-- Validation ngoài nhóm ≥2 buổi + quote nguyên văn (validation/user_testing_log.md).
-
-## Trang 6 — Demo & Phân công
-- Demo: `cd codebase && python app.py plan --level beginner --goal "chạy 5km trong 30 phút" --sessions 3`
-- Bảng phân công (README §2) + link repo.
-- Next: UI web, lưu lịch sử, tích hợp wearable. Cảm ơn BGK!
+Export: print to `demo-slides.pdf` (6 pages) before CP5 13:00 18/9. Submit PDF, not link.

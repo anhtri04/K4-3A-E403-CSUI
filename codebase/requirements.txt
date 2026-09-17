@@ -1,1 +1,4 @@
-# (urllib stdlib — không cần SDK; cài thêm nếu muốn dùng openai package)
+discord.py>=2.3
+openai>=1.30
+python-dotenv>=1.0
+pytest>=8.0

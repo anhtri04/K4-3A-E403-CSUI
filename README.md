@@ -1,84 +1,84 @@
-# K4-3A-E403-CSUI — Stamina Coach
+# K4-3A-E403-CSUI — BuildMate (Track E · Làn mở)
 
-> Repository nộp bài chuẩn quy chế: sẵn sàng để BGK / trợ giảng đối chiếu từng hạng mục điểm số.
+> Discord-native team coding companion for AI20K build phase. Vibe-code with your team inside a Discord room instead of alone.
 
-**Phòng:** E403 | **Nhóm:** CSUI | **Đề tài:** Stamina Coach — Prototype AI huấn luyện sức bền (chạy bộ / thể lực)
+**Lớp:** 3A · **Phòng:** E403 · **Cụm:** ____ · **Track:** E — Làn mở (trong phạm vi AI20k)
 
-## Canvas sản phẩm — Checkpoint 1
+Old direction (`Stamina Coach`, fitness app for outside market) was invalid for Track E → archived on branch `legacy/stamina-coach`. This `main` is the Track E pivot.
 
-**Stamina Coach — Trò chuyện. Hiểu bạn. Đề xuất lịch tập phù hợp.**
+| Họ và Tên | Mã Học Viên | Vai trò chính | Phần việc đảm nhiệm trong dự án |
+|---|---|---|---|
+| TODO_Name1 | TODO_MSHV1 | Leader + Spec | spec.md §1-§2, canvas, CP forms |
+| TODO_Name2 | TODO_MSHV2 | AI Engineer (codebase) | codebase/bot.py, ai_client.py, opencode_bridge.py |
+| TODO_Name3 | TODO_MSHV3 | Eval + Validation | eval/golden_set.json, run_eval.py, validation/ logs |
+| TODO_Name4 | TODO_MSHV4 | Slide + Demo | demo-slides.md/pdf, dry run, video dự phòng |
+|  |  |  |  |
 
-![Canvas Stamina Coach — Mini Hackathon AI, Checkpoint 1](assets/stamina-coach-canvas.png)
+> Fill this table + `TEAMMATES.md` before CP1. Captain's MSSV must be identical on all CP1–CP5 forms.
 
-Ý tưởng AI coach cá nhân giúp người dùng xây dựng thói quen tập luyện bền vững thông qua hội thoại và dữ liệu sức khỏe được người dùng cho phép sử dụng. Người dùng kể về buổi tập gần đây, mức độ mệt và thời gian rảnh để nhận gợi ý lịch tập ngắn hạn phù hợp.
+## 1. What this is (30s)
 
-Xem [mô tả Canvas đầy đủ](canvas.md): người dùng & nỗi đau, kế hoạch kiểm chứng nhu cầu, lát cắt hội thoại → lịch tập 3 ngày, automation dự kiến và phân công. Canvas diễn giải ảnh tham khảo; các hoạt động kiểm chứng và tính năng dự kiến chưa được coi là đã hoàn thành. Phần cuối tài liệu đối chiếu định hướng này với phạm vi prototype trong [AI Spec](spec.md).
+A bot that lives in a team's Discord room/server, backed by a coding agent (Opencode-compatible) scoped to that team's repo snapshot + an official-only AI20K course KB:
 
-## 1. Cấu trúc repository
+- `@buildmate check-tech <proposal>` — is this tech viable for our project? (grounded, with limits)
+- `@buildmate explain <function|class|file>` — what does this code do?
+- `@buildmate ask-course <question>` — logistics/course answers **only from official announcements**, else tag TA
+- `@buildmate propose-diff <task>` — proposes a unified diff on a **branch**, never pushes to main; human runs `!approve` (human-in-loop)
+
+Safety default: chat messages are **data, not commands**. No auto-push to main, no auto-DM, no personal data answers, no deanonymization.
+
+## 2. Repo structure (per challenge README)
 
 ```
 K4-3A-E403-CSUI/
-├── README.md          # File này: bản sao README đề bài + bảng phân công vai trò
-├── canvas.md          # Mô tả Canvas Stamina Coach — Checkpoint 1 từ ảnh tham khảo
-├── assets/            # Ảnh Canvas gốc và tài nguyên tài liệu
-├── TEAMMATES.md       # Họ tên, mã số học viên, vai trò từng thành viên
-├── spec.md            # AI Spec 8 phần đã khóa quality bar
-├── demo-slides.pdf    # Slide báo cáo đúng 6 trang, định dạng PDF
-├── codebase/          # Mã nguồn prototype có tích hợp gọi AI thật (ghi rõ phần mock)
-├── eval/              # Golden set (≥20 case) + bảng kết quả các lượt chạy
-├── validation/        # Nhật ký kiểm thử người dùng ngoài nhóm (R6) kèm quote nguyên văn
-└── reflection/        # Thu hoạch cá nhân từng thành viên (reflection/<MSHV>_HoTen.md)
+├── README.md          ← this file (member table at top)
+├── TEAMMATES.md       ← names + MSSV + roles
+├── canvas.md          ← CP1 canvas 7 lines
+├── spec.md            ← AI Spec (locks at CP4 21:00 17/9, quality bar frozen)
+├── demo-slides.md     ← source for 6-page slide → export to demo-slides.pdf at CP5
+├── demo-slides.pdf    ← 6-page PDF (submit at CP5 13:00 18/9)
+├── codebase/          ← prototype (REAL vs MOCK labelled)
+├── eval/              ← golden_set.json (≥20) + run tables
+├── validation/        ← outsider trial logs (R6 bonus)
+└── reflection/        ← 1 file per member
 ```
 
-## 2. Bảng phân công vai trò (đối chiếu điểm)
-
-| Hạng mục chấm | File đối chiếu | Phụ trách (điền tên) | Trạng thái |
-|---|---|---|---|
-| README + tổng hợp | `README.md`, `TEAMMATES.md` | TODO | ☐ |
-| AI Spec 8 phần + quality bar | `spec.md` | TODO | ☐ |
-| Prototype + gọi AI thật | `codebase/` | TODO | ☐ |
-| Golden set ≥20 + eval runs | `eval/` | TODO | ☐ |
-| Kiểm thử người dùng ngoài nhóm (R6) | `validation/` | TODO | ☐ |
-| Slide demo 6 trang | `demo-slides.pdf` | TODO | ☐ |
-| Thu hoạch cá nhân | `reflection/<MSHV>_*.md` | Từng thành viên | ☐ |
-
-> Cách điền: thay `TODO` bằng `Tên — MSHV`, tick ☐ → ☑ khi xong.
-
-## 3. Chạy nhanh prototype
+## 3. Quickstart prototype
 
 ```bash
 cd codebase
 pip install -r requirements.txt
-cp .env.example .env   # điền OPENAI_API_KEY (hoặc để trống để chạy mock)
-python app.py --help
-python app.py plan --level beginner --goal "chạy 5km trong 30 phút"
+cp .env.example .env   # fill OPENAI_API_KEY (OpenAI-compatible) + DISCORD_TOKEN for live bot
+# CLI demo (no Discord needed, works for CP2/CP3 video):
+python app.py explain --symbol "buildmate_propose_diff" --repo ./sample_repo
+python app.py check-tech --proposal "Use SQLite for team MVP with 4 concurrent editors"
+python app.py ask-course --question "hạn nộp lab 2 là khi nào"
+python app.py propose-diff --task "Add input validation to propose-diff" --repo ./sample_repo
+# Without API key → transparent [MOCK] fallback (see codebase/MOCK.md)
 ```
 
-- Có API key → gọi AI thật (OpenAI-compatible).
-- Không có key → tự fallback sang mock (xem `codebase/MOCK.md`, log ghi rõ `[MOCK]`).
+Live Discord (after CP3, optional):
 
-## 4. Chạy eval
+```bash
+python bot.py  # needs DISCORD_TOKEN + OPENAI_API_KEY in .env
+```
+
+## 4. Eval
 
 ```bash
 cd eval
 python run_eval.py --input golden_set.json --output results_run1.json
 ```
 
-Kết quả tổng hợp xem tại `eval/results.md`.
+See `eval/results.md` for run table vs quality bar.
 
-## 5. Quy ước nộp bài
+## 5. Submission checklist
 
-- `spec.md` đã khóa quality bar — mọi thay đổi sau khóa phải ghi vào mục Changelog cuối file.
-- `validation/` chỉ chứa test với người **ngoài nhóm** (R6). Ghi nguyên văn quote, không paraphrase.
-- `reflection/<MSHV>_HoTen.md`: mỗi thành viên 1 file, nêu rõ vai trò, phần việc, cách dùng AI, 1 bài học từ case thất bại.
-- `demo-slides.pdf` đúng 6 trang. Nguồn chỉnh sửa: `demo-slides.md` (nếu có).
-
-## 6. Checklist trước khi nộp
-
-- [ ] `TEAMMATES.md` đủ họ tên + MSHV + vai trò
-- [ ] `spec.md` đủ 8 phần + quality bar + changelog
-- [ ] `codebase/` chạy được, phân biệt rõ REAL vs MOCK
-- [ ] `eval/golden_set.json` ≥ 20 case, có bảng kết quả ≥ 1 lượt chạy
-- [ ] `validation/` ≥ 1 buổi test ngoài nhóm + quote nguyên văn
-- [ ] `reflection/` đủ số file = số thành viên
-- [ ] `demo-slides.pdf` mở được, đúng 6 trang
+- [ ] `TEAMMATES.md` real names + MSSV
+- [ ] `spec.md` §§1–9 complete, quality bar numeric, frozen at CP4
+- [ ] `codebase/` runs end-to-end on slice, REAL vs MOCK labelled, ≥1 real AI call trace kept
+- [ ] `eval/golden_set.json` ≥20 cases (≥2 per difficulty layer, ≥10 from real chat), ≥1 full run table
+- [ ] `validation/` ≥2 outsiders (aim 5, 2 from CP1) + verbatim quotes + Changelog entry
+- [ ] `reflection/` 1 file per member
+- [ ] `demo-slides.pdf` 6 pages, opens, no broken links
+- [ ] No `data/` pack committed, no `.env`/keys, no personal info

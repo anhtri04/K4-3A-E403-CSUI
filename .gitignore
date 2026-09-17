@@ -3,4 +3,6 @@ __pycache__/
 .env
 codebase/outputs/
 codebase/.env
+codebase/sample_repo/proposed_change.patch.txt
 .DS_Store
+*.log
