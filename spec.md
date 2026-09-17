@@ -49,6 +49,19 @@ Phiên bản: v1.0-frozen (khóa tại CP4 21:00 17/9 — quality bar đóng bă
 | G11 — Giải thích vì sao | `explain` luôn kèm `vì đoạn X dòng Y nói Z`; `G8` — bỏ qua dễ: mọi đề xuất có `!discard`, không chặn thread |
 | PAIR Errors + Trust | Hiển thị căn cứ để user tự kiểm (tin đúng mức > tin tối đa); log trace trong `codebase/outputs/` |
 
+- §4c. Shared vibecode + session model *(bổ sung sau CP4 — hướng CP5, chưa freeze, chưa implement)*:
+  - Positioning: BuildMate = **1 coding agent dùng chung cho cả team trong 1 khung chat Discord**, thay vì mỗi người 1 laptop + 1 agent riêng. Cả team chung một ngữ cảnh (đang bàn gì → code gì → diff gì), cùng ping bot để nó đọc/sửa code trên repo chung của team (1 room = 1 repo snapshot).
+  - "Push + deploy luôn" được giới hạn an toàn: bot chỉ tự commit + push **branch của session** (`vibebot/<task>-*`); **main cấm tuyệt đối**, chỉ qua `/approve` → PR. Deploy từ chat chỉ ra **preview env từ branch**; promote prod vẫn cần người duyệt.
+  - Session lifecycle (mặc định bot ĐIẾC trong room — không đọc chat cho tới khi được gọi):
+    | Lệnh | Tác dụng |
+    |---|---|
+    | `/join <task>` | Mở session mới cho task, bot bắt đầu nghe (tạo branch tương ứng) |
+    | `/quit` | Đóng session, đóng băng context + log |
+    | `/new <task>` | = `/quit` + `/join` một phát, session trắng hoàn toàn |
+    | `/context <id...>` (tối đa 3) | Kéo **tóm tắt đã lọc** (kết luận + diff đã approve, KHÔNG dump chat thô) từ session cũ vào session hiện tại, có ghi nguồn |
+    | `/sessions` | Liệt kê session đang mở/đã đóng (để biết id mà kéo) |
+  - 1 lần join→quit = 1 session = 1 đơn vị context + 1 đơn vị công việc (map 1 branch). Scope khuyến nghị per-thread (mỗi thread Discord = 1 session) để 2 task song song không lộn context. Trạng thái hiện tại: `bot.py` mới có `thread_sessions` keyed theo channel — cần sửa thành key theo thread + thêm 5 lệnh trên (chưa code).
+
 ## §5. Kiểu lỗi — 4 lớp chỗ khó + kịch bản (≥8)
 
 | # | Tình huống cụ thể | Lớp | Hành vi mong muốn (nói gì, hiện gì, cho user làm gì tiếp) | Nguyên tắc |
@@ -70,6 +83,7 @@ Phiên bản: v1.0-frozen (khóa tại CP4 21:00 17/9 — quality bar đóng bă
 - Correction (user sửa): output sai → user `!revise "dùng Postgres vì …"` → bot regenerate + giữ trace cũ. Mọi output bỏ được bằng `!discard`.
 - Khi bị đòi ngoài phạm vi (③): từ chối ngắn + nêu rule + làm phần hợp lệ (xem kịch bản 5–6).
 - Case đặc thù domain (④): tư vấn tech luôn kèm MVP-cost + cảnh báo revert/main-protection; explain auth luôn kèm test gợi ý.
+- Session lifecycle (§4c, bổ sung sau CP4): team chat tự do (bot điếc) → `/join <task>` mở session + branch → cùng ping bot code trong session → `/quit` đóng băng log; việc khác thì `/new`. Cần context cũ → `/context <id...>` (tối đa 3, chỉ tóm tắt đã lọc + ghi nguồn). 2 người lệnh mâu thuẫn trong 1 session → lệnh sau phải `!revise`, không đè.
 
 ## §7. Kiểm thử
 - Chiều chất lượng + định nghĩa kiểm chứng được:
@@ -93,3 +107,4 @@ Phiên bản: v1.0-frozen (khóa tại CP4 21:00 17/9 — quality bar đóng bă
 | 17/9 | Phase 2 backend: `OpencodeServer` HTTP client + `.opencode/agents` (readonly/coder) + `approvals.py` (!approve→branch+PR) + slash commands | Kết quả research tính khả thi: `opencode serve` có OpenAPI + permission deny; local backend giữ làm fallback |
 | CP4 21:00 17/9 | Khóa quality bar v1.0 | Theo lịch; sau đó chỉ append, không sửa bar |
 | CP4 17/9 (v1.0-frozen) | Chuẩn hóa §1/§2/§8 bằng khai báo trung thực: survey n=0, quotes 0/5, tần suất E1 chưa đo, willing users 0/2, golden real-chat 1/24, run1 stub-only; ghi công thức Quality Bar định lượng vào §7 | Chống hạ chuẩn sau khi biết kết quả chạy; thiếu sót khai báo rõ thay vì bịa số |
+| Sau CP4 (hướng CP5) | Bổ sung §4c shared vibecode + session model (`/join`/`/quit`/`/new`/`/context`/`/sessions`, mặc định điếc, push branch + preview-deploy, main vẫn cấm) + 1 nhánh §6; KHÔNG sửa Quality Bar | Team chốt: 1 agent dùng chung trong 1 khung chat thay vì mỗi người 1 agent riêng; room dài vượt context window nên bot chỉ nghe trong session được gọi |
