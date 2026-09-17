@@ -5,4 +5,6 @@
 - `course_kb.json`: 2 FAKE announcements (ANN-001/002). Replace with real official ids before measuring.
 - `sample_repo/`: tiny fake repo for `explain` grep demo.
 - `propose-diff`: writes a `.patch.txt` preview, does NOT git push.
+- `approve` in demo mode (APPROVERS unset): anyone may approve, loudly logged. Set APPROVERS for real use.
+- `BACKEND=opencode` without a live server: falls back to local and says so (check `backend_available()`).
 - Traces: `codebase/outputs/*.md` record `mocked=true/false` per call. CP3 video must show at least one `mocked=false`.

@@ -87,4 +87,5 @@ Phiên bản: v0.1-draft (khóa tại CP4 21:00 17/9 — quality bar đóng băn
 | Thời điểm | Đổi gì | Vì sao (trỏ về feedback/case nào) |
 |---|---|---|
 | 17/9 | Pivot Track E từ Stamina Coach (branch legacy/stamina-coach) | Stamina là app tiêu dùng ngoài khoá → invalid Track E ("Không hợp lệ: app tiêu dùng chung chung") |
+| 17/9 | Phase 2 backend: `OpencodeServer` HTTP client + `.opencode/agents` (readonly/coder) + `approvals.py` (!approve→branch+PR) + slash commands | Kết quả research tính khả thi: `opencode serve` có OpenAPI + permission deny; local backend giữ làm fallback |
 | CP4 21:00 17/9 | Khóa quality bar v1.0 | Theo lịch; sau đó chỉ append, không sửa bar |

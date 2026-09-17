@@ -1,5 +1,11 @@
-"""Scoped repo bridge: explain + check-tech + propose-diff (branch patch only)."""
-import os, re, difflib
+"""Scoped repo bridge: explain + check-tech + propose-diff (branch patch only).
+
+Two backends:
+- local (default): rule pre-check + grep + direct LLM via ai_client. Zero extras.
+- opencode: talks to `opencode serve` HTTP API (OpenAPI at /doc) when
+  OPENCODE_SERVER_URL is set and reachable. Falls back to local otherwise.
+"""
+import os, re, json, base64, urllib.request, urllib.error
 
 SYSTEM = ("You are BuildMate, a team coding companion inside Discord. "
           "Be concise (<=150 words for check-tech). Cite file:line for code claims. "
@@ -58,3 +64,87 @@ def propose_diff(repo: str, task: str) -> dict:
     else:
         body += f"+ # TODO: implement: {task[:120]}\n"
     return {"patch": body, "target": target, "branch": "buildmate/proposal"}
+
+
+# ---------------------------------------------------------------------------
+# OpenCode `serve` backend (Phase 2). Stdlib HTTP only — no new dependencies.
+# Server contract: https://opencode.ai/docs/server (verify shapes at /doc).
+# ---------------------------------------------------------------------------
+
+def _server_base() -> str | None:
+    url = os.getenv("OPENCODE_SERVER_URL", "").rstrip("/")
+    return url or None
+
+
+def _http(method: str, url: str, payload: dict | None = None, timeout: int = 120) -> tuple[int, str]:
+    data = json.dumps(payload).encode() if payload is not None else None
+    req = urllib.request.Request(url, data=data, method=method,
+                                 headers={"Content-Type": "application/json"})
+    pwd = os.getenv("OPENCODE_SERVER_PASSWORD", "")
+    user = os.getenv("OPENCODE_SERVER_USERNAME", "opencode")
+    if pwd:
+        token = base64.b64encode(f"{user}:{pwd}".encode()).decode()
+        req.add_header("Authorization", f"Basic {token}")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.status, r.read().decode()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode(errors="ignore")
+    except Exception as e:
+        return 0, str(e)
+
+
+class OpencodeServer:
+    """Thin client for one team's `opencode serve` (working dir = team snapshot)."""
+
+    def __init__(self, base: str | None = None):
+        self.base = base or _server_base() or ""
+
+    @property
+    def available(self) -> bool:
+        if not self.base:
+            return False
+        code, _ = _http("GET", f"{self.base}/global/health", timeout=5)
+        return code == 200
+
+    def create_session(self, title: str = "buildmate") -> str | None:
+        code, body = _http("POST", f"{self.base}/session", {"title": title})
+        if code in (200, 201):
+            try:
+                return json.loads(body).get("id")
+            except Exception:
+                return None
+        return None
+
+    def ask(self, session_id: str, text: str, agent: str = "buildmate-readonly",
+            system: str = SYSTEM) -> str | None:
+        """Send message and wait. Returns concatenated text parts (best-effort parse)."""
+        payload = {"agent": agent, "system": system,
+                   "parts": [{"type": "text", "text": text}]}
+        code, body = _http("POST", f"{self.base}/session/{session_id}/message", payload)
+        if code != 200:
+            return None
+        try:
+            data = json.loads(body)
+            parts = data.get("parts", []) if isinstance(data, dict) else []
+            texts = [p.get("text", "") for p in parts
+                     if isinstance(p, dict) and p.get("text")]
+            return "\n".join(texts).strip() or None
+        except Exception:
+            return None
+
+    def get_diff(self, session_id: str) -> list[dict]:
+        """Session FileDiff[] — bot renders it, human approves, never auto-applied."""
+        code, body = _http("GET", f"{self.base}/session/{session_id}/diff")
+        if code != 200:
+            return []
+        try:
+            data = json.loads(body)
+            return data if isinstance(data, list) else []
+        except Exception:
+            return []
+
+
+def backend_available() -> bool:
+    """True only when OPENCODE_SERVER_URL is set AND the server answers."""
+    return OpencodeServer().available

@@ -3,6 +3,7 @@ import argparse, os, json, datetime
 from ai_client import chat
 from course_kb import lookup
 from opencode_bridge import grep_repo, check_tech, propose_diff, is_attack, SYSTEM
+import approvals
 
 OUT = "./outputs"
 
@@ -54,13 +55,26 @@ def cmd_propose_diff(args):
     print(f"Saved patch preview → {d['target']}")
 
 
+def cmd_approve(args):
+    print(approvals.approve(args.id, args.user, args.repo))
+
+
+def cmd_discard(args):
+    print(approvals.discard(args.id, args.user))
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(prog="buildmate")
+    ap.add_argument("--backend", default=os.getenv("BACKEND", "local"),
+                    help="local (default) or opencode (`opencode serve` at OPENCODE_SERVER_URL)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     e = sub.add_parser("explain"); e.add_argument("--symbol", required=True); e.add_argument("--repo", default="./sample_repo")
     c = sub.add_parser("check-tech"); c.add_argument("--proposal", required=True)
     a = sub.add_parser("ask-course"); a.add_argument("--question", required=True)
     p = sub.add_parser("propose-diff"); p.add_argument("--task", required=True); p.add_argument("--repo", default="./sample_repo")
+    ap2 = sub.add_parser("approve"); ap2.add_argument("--id", required=True); ap2.add_argument("--user", default="cli-demo"); ap2.add_argument("--repo", default="./sample_repo")
+    di = sub.add_parser("discard"); di.add_argument("--id", required=True); di.add_argument("--user", default="cli-demo")
     args = ap.parse_args()
+    os.environ["BACKEND"] = args.backend
     {"explain": cmd_explain, "check-tech": cmd_check_tech, "ask-course": cmd_ask_course,
-     "propose-diff": cmd_propose_diff}[args.cmd](args)
+     "propose-diff": cmd_propose_diff, "approve": cmd_approve, "discard": cmd_discard}[args.cmd](args)
