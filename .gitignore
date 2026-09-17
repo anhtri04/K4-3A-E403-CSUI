@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .env
 codebase/outputs/
+codebase/state/
 codebase/.env
 codebase/sample_repo/proposed_change.patch.txt
 .DS_Store
