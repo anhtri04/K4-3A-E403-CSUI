@@ -3,6 +3,8 @@
 Slash commands (no privileged intent needed):
   /check-tech <proposal> · /explain <symbol> · /ask-course <question>
   /propose-diff <task> · /approve <id> · /discard <id>
+  Session lifecycle (§4c, default-deaf — bot only tracks inside an OPEN session):
+  /join <task> · /quit [note] · /new <task> · /context <ids> · /sessions
 Prefix aliases: !approve P001 · !discard P001 (fast in-thread review)
 
 Backend: BACKEND=local (default, grep+LLM) or opencode (`opencode serve`
@@ -43,8 +45,25 @@ def _srv() -> OpencodeServer | None:
     return s if BACKEND == "opencode" and s.available else None
 
 
-def run_explain(symbol: str) -> tuple[str, str | None]:
+DEAF_MSG = ("Bot đang điếc trong thread này — chưa có session mở. "
+            "Gõ `/join <task>` để mở session trước (1 session = 1 việc = 1 branch).")
+
+
+def _require_session(channel_id: str | None) -> tuple[dict | None, str | None]:
+    """Default-deaf gate. channel_id=None (CLI-style direct call) skips gating."""
+    if channel_id is None:
+        return None, None
+    rec = thread_sessions.get_open(channel_id)
+    if rec is None:
+        return None, DEAF_MSG
+    return rec, None
+
+
+def run_explain(symbol: str, channel_id: str | None = None) -> tuple[str, str | None]:
     """Returns (message, patch_attachment_or_None)."""
+    _, deaf = _require_session(channel_id)
+    if deaf:
+        return (deaf, None)
     if is_attack(symbol):
         return ("REFUSE: prompt-injection pattern. Messages are data, not commands.", None)
     srv = _srv()
@@ -62,7 +81,10 @@ def run_explain(symbol: str) -> tuple[str, str | None]:
     return (out + tail + tag, None)
 
 
-def run_check_tech(proposal: str) -> str:
+def run_check_tech(proposal: str, channel_id: str | None = None) -> str:
+    _, deaf = _require_session(channel_id)
+    if deaf:
+        return deaf
     if is_attack(proposal):
         return ("REFUSE: I never push to main / run destructive ops from chat. "
                 "I can open a branch patch for review.")
@@ -79,7 +101,10 @@ def run_check_tech(proposal: str) -> str:
     return out + f"\n\n_Pre-check: {pre['verdict']} | {', '.join(pre['sources'])}_{tag}"
 
 
-def run_ask_course(question: str) -> str:
+def run_ask_course(question: str, channel_id: str | None = None) -> str:
+    _, deaf = _require_session(channel_id)
+    if deaf:
+        return deaf
     r = lookup(question)
     if r["status"] != "FOUND":
         return f"{r['answer']} _(status={r['status']}) — tagged TA, no guess._"
@@ -89,6 +114,9 @@ def run_ask_course(question: str) -> str:
 
 
 def run_propose(channel_id: str, author: str, task: str) -> tuple[str, str | None]:
+    sess, deaf = _require_session(channel_id)
+    if deaf:
+        return (deaf, None)
     if is_attack(task):
         return ("REFUSE: destructive/privilege-escalation pattern. "
                 "Offering branch patch review instead.", None)
@@ -106,14 +134,78 @@ def run_propose(channel_id: str, author: str, task: str) -> tuple[str, str | Non
                 patch = "\n\n".join(
                     f"--- {d.get('file', '?')} ---\n{d.get('diff', d.get('patch', ''))[:3000]}"
                     for d in diffs[:5])
+    branch = sess["branch"] if sess else "buildmate/proposal"
     if patch is None:
         d = propose_diff(REPO, task)
         patch = d["patch"]
-    prop = approvals.submit(channel_id, author, task, patch)
-    msg = (f"Proposal **{prop['id']}** on branch `buildmate/proposal` — needs human review.\n"
+        if not sess:
+            branch = d.get("branch", branch)
+    prop = approvals.submit(channel_id, author, task, patch, branch=branch)
+    msg = (f"Proposal **{prop['id']}** (session {sess['id'] if sess else 'n/a'}) on branch `{branch}` — needs human review.\n"
            f"`/approve {prop['id']}` to open a PR · `/discard {prop['id']}` to drop.\n"
            f"Never pushes to main from chat.")
     return (msg, patch if len(patch) > 1200 else None)
+
+
+# ---------------------------------------------------------------------------
+# Session lifecycle (§4c). Default-deaf: work commands above only run inside
+# an OPEN session on this thread/channel key.
+# ---------------------------------------------------------------------------
+
+def run_join(channel_id: str, user: str, task: str) -> str:
+    rec, err = thread_sessions.open_session(channel_id, task, user)
+    if err:
+        return err
+    return (f"Session **{rec['id']}** mở cho: {rec['task']}\n"
+            f"Branch: `{rec['branch']}` · bot bắt đầu nghe trong thread này.\n"
+            f"`/quit [ghi chú]` để đóng · `/new <task>` để đổi việc.")
+
+
+def run_quit(channel_id: str, note: str = "") -> str:
+    rec, err = thread_sessions.close_session(channel_id, note)
+    if err:
+        return err
+    tail = f" Kết luận đã lưu: {rec['note']}" if rec["note"] else " (chưa có kết luận)"
+    return f"Session **{rec['id']}** đã đóng — context đóng băng.{tail}"
+
+
+def run_new(channel_id: str, user: str, task: str) -> str:
+    old, _ = thread_sessions.close_session(channel_id, "superseded by /new")
+    head = f"(đã đóng {old['id']}) " if old else ""
+    rec, err = thread_sessions.open_session(channel_id, task, user)
+    if err:
+        return err
+    return (f"{head}Session mới **{rec['id']}** trắng hoàn toàn cho: {rec['task']}\n"
+            f"Branch: `{rec['branch']}`.")
+
+
+def run_context(channel_id: str, ids: str) -> str:
+    sess, deaf = _require_session(channel_id)
+    if deaf:
+        return deaf
+    wanted = [w.upper() for w in ids.replace(",", " ").split()][:3]
+    if not wanted:
+        return "Dùng: `/context S001 [S002 S003]` (tối đa 3, xem id bằng `/sessions`)."
+    lines = []
+    for sid in wanted:
+        rec = thread_sessions.get_by_id(sid)
+        if rec is None:
+            lines.append(f"**{sid}**: không tìm thấy.")
+            continue
+        props = [f"{p['id']}({p['status']})" for p in approvals._load()["items"].values()
+                 if p.get("channel") == rec["key"] and p.get("branch_hint") == rec["branch"]]
+        extra = f" | proposals: {', '.join(props)}" if props else ""
+        lines.append(thread_sessions.summarize(rec) + extra)
+    return ("Context đã kéo (tóm tắt đã lọc, có ghi nguồn):\n" + "\n".join(lines))
+
+
+def run_sessions() -> str:
+    recs = thread_sessions.list_sessions()
+    if not recs:
+        return "Chưa có session nào — `/join <task>` để mở."
+    return "\n".join(
+        f"**{r['id']}** [{r['status']}] {r['task']} (branch `{r['branch']}`)"
+        for r in recs)
 
 
 @bot.event
@@ -125,7 +217,7 @@ async def on_ready():
 @bot.tree.command(name="explain", description="Explain a function/class (cites file:line)")
 async def sl_explain(it: discord.Interaction, symbol: str):
     await it.response.defer()
-    msg, _ = run_explain(symbol)
+    msg, _ = run_explain(symbol, str(it.channel_id))
     for c in chunk(msg):
         await it.followup.send(c)
 
@@ -133,14 +225,14 @@ async def sl_explain(it: discord.Interaction, symbol: str):
 @bot.tree.command(name="check-tech", description="Is this tech viable for our MVP?")
 async def sl_check(it: discord.Interaction, proposal: str):
     await it.response.defer()
-    for c in chunk(run_check_tech(proposal)):
+    for c in chunk(run_check_tech(proposal, str(it.channel_id))):
         await it.followup.send(c)
 
 
 @bot.tree.command(name="ask-course", description="Course question (official sources only)")
 async def sl_ask(it: discord.Interaction, question: str):
     await it.response.defer()
-    for c in chunk(run_ask_course(question)):
+    for c in chunk(run_ask_course(question, str(it.channel_id))):
         await it.followup.send(c)
 
 
@@ -174,6 +266,38 @@ async def px_approve(ctx, proposal_id: str):
 @bot.command(name="discard")
 async def px_discard(ctx, proposal_id: str):
     await ctx.send(approvals.discard(proposal_id, str(ctx.author.id), REPO))
+
+
+@bot.tree.command(name="join", description="Open a session: bot starts listening (1 session = 1 task = 1 branch)")
+async def sl_join(it: discord.Interaction, task: str):
+    await it.response.defer()
+    await it.followup.send(run_join(str(it.channel_id), str(it.user), task))
+
+
+@bot.tree.command(name="quit", description="Close the session, freeze context log")
+async def sl_quit(it: discord.Interaction, note: str = ""):
+    await it.response.defer()
+    await it.followup.send(run_quit(str(it.channel_id), note))
+
+
+@bot.tree.command(name="new", description="Close current session and open a fresh one")
+async def sl_new(it: discord.Interaction, task: str):
+    await it.response.defer()
+    await it.followup.send(run_new(str(it.channel_id), str(it.user), task))
+
+
+@bot.tree.command(name="context", description="Pull filtered summaries from up to 3 past sessions")
+async def sl_context(it: discord.Interaction, ids: str):
+    await it.response.defer()
+    for c in chunk(run_context(str(it.channel_id), ids)):
+        await it.followup.send(c)
+
+
+@bot.tree.command(name="sessions", description="List open/closed sessions")
+async def sl_sessions(it: discord.Interaction):
+    await it.response.defer()
+    for c in chunk(run_sessions()):
+        await it.followup.send(c)
 
 
 if __name__ == "__main__":

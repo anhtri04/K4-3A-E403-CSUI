@@ -27,12 +27,13 @@ def is_approver(user_id: str) -> tuple[bool, str]:
     return (str(user_id) in [x.strip() for x in raw.split(",")],
             "allowlisted" if str(user_id) in [x.strip() for x in raw.split(",")] else "not in APPROVERS")
 
-def submit(channel_id: str, author: str, task: str, patch: str) -> dict:
+def submit(channel_id: str, author: str, task: str, patch: str, branch: str | None = None) -> dict:
     db = _load()
     db["seq"] += 1
     pid = f"P{db['seq']:03d}"
     db["items"][pid] = {"id": pid, "channel": str(channel_id), "author": str(author),
                         "task": task[:500], "patch": patch[:8000], "status": "pending",
+                        "branch_hint": branch,
                         "ts": datetime.datetime.now().isoformat(timespec="seconds")}
     _save(db)
     return db["items"][pid]
@@ -72,7 +73,8 @@ def approve(pid: str, user_id: str, repo: str) -> str:
     if it["status"] != "pending":
         return f"{pid}: already {it['status']}."
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    branch = f"buildmate/proposal-{it['id'].lower()}-{ts}"
+    hint = (it.get("branch_hint") or "").strip()
+    branch = f"{hint}-{ts}" if hint else f"buildmate/proposal-{it['id'].lower()}-{ts}"
     ok, out = _run(["git", "checkout", "-b", branch], repo)
     if not ok:
         return f"git checkout -b failed: {out}"
