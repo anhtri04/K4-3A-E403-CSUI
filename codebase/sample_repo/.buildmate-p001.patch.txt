@@ -1,0 +1,8 @@
+# P001 task: Add input validation to propose-diff
+# approved by cli-demo (human-in-loop)
+
+# Proposed patch (branch-only, needs !approve)
+# Task: Add input validation to propose-diff
+# Rule: never push to main from chat.
++ def validate_input(s: str) -> bool:
++     return bool(s and len(s.strip()) > 0)
